@@ -1,0 +1,23 @@
+.subjectBadge {
+    cursor: pointer;
+}
+
+.subjectBadge:hover {
+    background-color: gray !important;
+}
+
+.showStudents {
+    cursor: pointer;
+}
+
+.showStudents:hover {
+    text-decoration: underline;
+}
+
+.cursor {
+    cursor: pointer;
+}
+
+.cursor:hover {
+    text-decoration: underline;
+}

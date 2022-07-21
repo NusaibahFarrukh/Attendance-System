@@ -1,9 +1,10 @@
 import React from "react";
+import './style.css';
 
 class Navbar extends React.Component {
     render() {
         return (
-            <nav className="navbar navbar-expand-lg bg-dark">
+            <nav className="navbar navbar-expand-lg bg-dark text-light">
                 <div className="container-fluid">
                     <a className="navbar-brand" href="#">Attendance App</a>
                     <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">

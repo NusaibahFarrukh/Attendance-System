@@ -1,0 +1,11 @@
+.navbar-brand {
+    color: white !important;
+}
+
+.navbar-nav .nav-link.active, .navbar-nav .show>.nav-link {
+    color: gray !important;
+}
+
+.navbar-nav .nav-link {
+    color: white !important;
+}

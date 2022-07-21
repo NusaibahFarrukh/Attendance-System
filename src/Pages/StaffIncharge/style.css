@@ -1,0 +1,7 @@
+.teacherName {
+    cursor: pointer;
+}
+
+.teacherName:hover {
+    text-decoration: underline;
+}

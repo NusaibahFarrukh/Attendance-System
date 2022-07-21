@@ -1,3 +1,17 @@
+## How to run the project:
+1. Go to the following link:
+`https://github.com/NusaibahFarrukh/Attendance-System`
+2. Click on the green color button which says "Code"
+3. Copy the url:
+`https://github.com/NusaibahFarrukh/Attendance-System.git`
+4. open terminal in any folder and run this command:
+`git clone https://github.com/NusaibahFarrukh/Attendance-System.git`
+5. Go in the folder that just clones. Shift + Right click -> Open Terminal and run the following command:
+`npm install`
+`npm start`
+    
+
+## To create a new project:
 To create a new react application after node is installed:
 1. Open terminal
 2. CD into the folder where we want to create the folder

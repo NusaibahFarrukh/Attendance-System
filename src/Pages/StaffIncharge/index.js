@@ -5,6 +5,8 @@ import Swal from 'sweetalert2'
 
 import Navabar from '../../Components/Navbar';
 
+import './style.css';
+
 class StaffIncharge extends React.Component {
     constructor(props) {
         super(props);
@@ -104,6 +106,23 @@ class StaffIncharge extends React.Component {
         })
     }
 
+    markTeacherAttendance = (index) => {
+        console.log("Teacher to mark attendance: ", this.state.teachersName[index])
+        Swal.fire({
+            title: 'Do you want to mark ' + this.state.teachersName[index] + ' as present for today?',
+            showCancelButton: true,
+            confirmButtonText: 'Confirm',
+          }).then((result) => {
+            /* Read more about isConfirmed, isDenied below */
+            if (result.isConfirmed) {
+                console.log("Teacher marked present")
+                Swal.fire('Teacher marked as present!', '', 'success')
+            } else if (result.isDenied) {
+              Swal.fire('Changes are not saved', '', 'info')
+            }
+          })
+    }
+
     render() {
         return (
             <>
@@ -131,7 +150,8 @@ class StaffIncharge extends React.Component {
                                 this.state.teachersName.map((teacher, index) => {
                                     return (
                                         <li key={index}>
-                                            <span>{teacher} </span>
+                                            <span className="teacherName" onClick={() => this.markTeacherAttendance(index)}>
+                                                {teacher}  | </span>
                                             <span className='ml-5'>
                                                 <FiTrash2 onClick={() => this.deleteTeacher(index)} />
                                             </span>
@@ -159,7 +179,7 @@ class StaffIncharge extends React.Component {
                                 this.state.nonTeachersName.map((teacher, index) => {
                                     return (
                                         <li key={index}>
-                                            <span>{teacher} </span>
+                                            <span className="teacherName" onClick={this.markStaffAttendance}>{teacher} | </span>
                                             <span className='ml-5'>
                                                 <FiTrash2 onClick={() => this.deleteStaff(index)} />
                                             </span>
@@ -168,6 +188,46 @@ class StaffIncharge extends React.Component {
                                 })
                             }
                             </ol>
+                        </div>
+
+                        {/* div for regularization requests */}
+                        <div className='col-4'>
+                            <h3>Regularization Requests:</h3>
+                            <div class="alert alert-info" role="alert">
+                                Hubert Woolridge has requested to mark them <b>present</b> on 21st July 2022.
+                                <br />
+                                <button className="btn btn-sm btn-success me-2">Accept</button>
+                                <button className="btn btn-sm btn-danger">Reject</button>
+                            </div>
+                            <div class="alert alert-info" role="alert">
+                                Callie Massy has requested to mark them <b>absent</b> on 12th July 2022.
+                                <br />
+                                <button className="btn btn-sm btn-success me-2">Accept</button>
+                                <button className="btn btn-sm btn-danger">Reject</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="row mt-5">
+                        <div className="col-4">
+                            <h4>Check the attendance report:</h4>
+                            <select class="form-select" aria-label="Default select example">
+                                <option selected>Open this select menu</option>
+                                {
+                                    this.state.teachersName.map(teacher => (
+                                        <option>{teacher}</option>
+                                    ))
+                                }
+                                {
+                                    this.state.nonTeachersName.map(staff => (
+                                        <option>{staff}</option>
+                                    ))
+                                }
+                                {/* <option value="1">One</option>
+                                <option value="2">Two</option>
+                                <option value="3">Three</option> */}
+                            </select>
+                            <button className="btn btn-info mt-4">Generate Report</button>
                         </div>
                     </div>
 
