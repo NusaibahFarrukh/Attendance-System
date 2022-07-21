@@ -14,11 +14,11 @@ function App() {
   return (
     <div className="App">
       {/* <MainPage /> */}
-      {/* <AdminDashboard /> */}
+      <AdminDashboard />
       {/* <StaffIncharge /> */}
       {/* <TeacherDashboard /> */}
       {/* <StaffDashboard /> */}
-      <StudentDashboard />
+      {/* <StudentDashboard /> */}
     </div>
   );
 }
