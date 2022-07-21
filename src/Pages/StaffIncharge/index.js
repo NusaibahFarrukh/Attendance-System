@@ -108,17 +108,19 @@ class StaffIncharge extends React.Component {
 
     markTeacherAttendance = (index) => {
         console.log("Teacher to mark attendance: ", this.state.teachersName[index])
+
         Swal.fire({
-            title: 'Do you want to mark ' + this.state.teachersName[index] + ' as present for today?',
+            title: 'Mark the attendance for ' + this.state.teachersName[index],
+            showDenyButton: true,
             showCancelButton: true,
-            confirmButtonText: 'Confirm',
+            confirmButtonText: 'Present',
+            denyButtonText: `Absent`,
           }).then((result) => {
             /* Read more about isConfirmed, isDenied below */
             if (result.isConfirmed) {
-                console.log("Teacher marked present")
-                Swal.fire('Teacher marked as present!', '', 'success')
+              Swal.fire('Attendance Marked as Present!', '', 'success')
             } else if (result.isDenied) {
-              Swal.fire('Changes are not saved', '', 'info')
+              Swal.fire('Attendance Marked as Absent!', '', 'info')
             }
           })
     }
