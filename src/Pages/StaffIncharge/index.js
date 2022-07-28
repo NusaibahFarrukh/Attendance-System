@@ -1,4 +1,5 @@
 import React from 'react';
+import axios from 'axios';
 
 import {FiTrash2} from 'react-icons/fi';
 import Swal from 'sweetalert2'
@@ -11,48 +12,92 @@ class StaffIncharge extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            teachersName: [
-                "Hubert Woolridge",
-                "Robert Burgess",
-                "Nina Williamson",
-                "Ashley Hancock",
-                "Callie Massy",
-                "Trista Loxley",
-                "Cedric Marshman",
-                "Tony Tingey",
-                "Trix Morton",
-                "Conrad Jackson"
-            ],
-            newTeacher: '',
-            nonTeachersName: [
-                "Callie Massy",
-                "Trista Loxley",
-                "Cedric Marshman",
-                "Tony Tingey",
-                "Trix Morton",
-                "Conrad Jackson",
-                "Hubert Woolridge",
+            // teachersName: [
+            //     "Hubert Woolridge",
+            //     "Robert Burgess",
+            //     "Nina Williamson",
+            //     "Ashley Hancock",
+            //     "Callie Massy",
+            //     "Trista Loxley",
+            //     "Cedric Marshman",
+            //     "Tony Tingey",
+            //     "Trix Morton",
+            //     "Conrad Jackson"
+            // ],
+            // nonTeachersName: [
+            //     "Callie Massy",
+            //     "Trista Loxley",
+            //     "Cedric Marshman",
+            //     "Tony Tingey",
+            //     "Trix Morton",
+            //     "Conrad Jackson",
+            //     "Hubert Woolridge",
                 
-            ],
-            newStaff: ''
+            // ],
+            teachersName: [],
+            nonTeachersName: [],
+            newTeacher: '',
+            newTeacherEmail: '',
+            newStaff: '',
+            newStaffEmail: '',
         }
     }
 
-    deleteTeacher = (index) => {
-        console.log("Teacher to be deleted: ", index)
+    componentDidMount() {
+        axios.get('http://localhost:5000/getTeaching')
+            .then(res => {
+                console.log(res.data.data)
+                if (res.status === 200) {
+                    console.log("Found Teachers from API");
+                    let allTeachers = res.data.data;
+                    console.log({allTeachers})
+
+                    this.setState({
+                        teachersName: allTeachers
+                    })
+                }
+            }).catch(err => {
+                console.log(err)
+            })
+        
+        axios.get('http://localhost:5000/getNonTeaching')
+            .then(res => {
+                console.log(res.data.data)
+                if (res.status === 200) {
+                    console.log("Found Non Teachers from API");
+                    let allNonTeachers = res.data.data;
+                    console.log({allNonTeachers})
+
+                    this.setState({
+                        nonTeachersName: allNonTeachers
+                    })
+                }
+            }).catch(err => {
+                console.log(err)
+            })
+    }
+
+    deleteTeacher = (id, diff) => {
+        console.log("Teacher to be deleted: ", id)
+        let teacherName = this.state[diff].filter(item => item._id === id)[0].name
+        
 
         Swal.fire({
-            title: 'Do you want to remove ' + this.state.teachersName[index] + ' from the list?',
+            title: 'Do you want to remove ' + teacherName  + ' from the list?',
             showCancelButton: true,
             confirmButtonText: 'Delete',
           }).then((result) => {
-            /* Read more about isConfirmed, isDenied below */
             if (result.isConfirmed) {
-                let temp = this.state.teachersName;
-                temp.splice(index, 1);
-                this.setState({
-                    teachersName: temp
-                })
+                axios.get('http://localhost:5000/deleteStaff?id=' + id)
+                    .then(res => {
+                        console.log(res)
+                        if (res.status === 200) {
+                            console.log("Teacher deleted")
+                            this.componentDidMount()
+                        }
+                    }).catch(err => {
+                        console.log(err)
+                    })
             } else if (result.isDenied) {
               Swal.fire('Changes are not saved', '', 'info')
             }
@@ -82,23 +127,67 @@ class StaffIncharge extends React.Component {
 
     addTeacher = () => {
         console.log(this.state.newTeacher)
-        let temp = this.state.teachersName;
-        temp.push(this.state.newTeacher);
-        this.setState({
-            teachersName: temp,
-            newTeacher: ''
-        })
+        console.log(this.state.newTeacherEmail)
+        
+        axios.get('http://localhost:5000/addTeacher?name=' + this.state.newTeacher + '&email=' + this.state.newTeacherEmail + '&subrole=teacher')
+            .then(res => {
+                console.log(res)
+                if (res.status === 200) {
+                    console.log("Teacher added to DB")
+                    axios.get('http://localhost:5000/getTeaching')
+                        .then(response => {
+                            console.log(response.data.data)
+                            if (response.status === 200) {
+                                let allTeachers = response.data.data;
+                                this.setState({
+                                    teachersName: allTeachers,
+                                    newTeacher: '',
+                                    newTeacherEmail: ''
+                                })
+                            }
+                        }
+                        ).catch(err => {
+                            console.log(err)
+                        })
+                }
+            }).catch(err => {
+                console.log(err)
+            })
     }
 
     addStaff = () => {
         console.log("Staff to Add: ", this.state.newStaff)
-        let temp = this.state.nonTeachersName;
-        temp.push(this.state.newStaff);
-        this.setState({
-            nonTeachersName: temp,
-            newStaff: ''
-        })
+        console.log("Staff to Add: ", this.state.newStaffEmail)
+
+        axios.get('http://localhost:5000/addNonTeacher?name=' + this.state.newStaff + '&email=' + this.state.newStaffEmail + '&subrole=nonTeacher')
+            .then(res => {
+                console.log(res)
+                if (res.status === 200) {
+                    console.log("Staff added to DB")
+                    axios.get('http://localhost:5000/getNonTeaching')
+                        .then(response => {
+                            console.log(response.data.data)
+                            if (response.status === 200) {
+                                let allNonTeachers = response.data.data;
+                                this.setState({
+                                    nonTeachersName: allNonTeachers,
+                                    newStaff: '',
+                                    newStaffEmail: ''
+                                })
+                            }
+                        }
+                        ).catch(err => {
+                            console.log(err)
+                        }
+                    )
+
+                }
+            }).catch(err => {
+                console.log(err)
+            }
+        )
     }
+
 
     onTextChange = (event) => {
         this.setState({
@@ -140,27 +229,30 @@ class StaffIncharge extends React.Component {
                             <h3>Teaching Staff:</h3>
                             
                             <div class="input-group mb-3">
-                                <input type="text" class="form-control" placeholder="Add teacher"  value={this.state.newTeacher} name='newTeacher'
-                                    onChange={this.onTextChange} aria-label="Recipient's username" aria-describedby="button-addon2" />
+                                <input type="text" class="form-control" placeholder="Teacher Name"  value={this.state.newTeacher} name='newTeacher'
+                                    onChange={this.onTextChange} />
+                                <input type="email" class="form-control" placeholder="Teacher Email"  value={this.state.newTeacherEmail} name='newTeacherEmail'
+                                    onChange={this.onTextChange} />
                                 <button class="btn btn-outline-secondary" type="button" id="button-addon2"
-                                    onClick={this.addTecher}>
+                                    onClick={this.addTeacher}>
                                         Add
                                 </button>
                             </div>
+
                             <ol>
-                            {
-                                this.state.teachersName.map((teacher, index) => {
-                                    return (
-                                        <li key={index}>
-                                            <span className="teacherName" onClick={() => this.markTeacherAttendance(index)}>
-                                                {teacher}  | </span>
-                                            <span className='ml-5'>
-                                                <FiTrash2 onClick={() => this.deleteTeacher(index)} />
-                                            </span>
-                                        </li>
-                                    )
-                                })
-                            }
+                                {
+                                    this.state.teachersName.map(teacher => {
+                                        return (
+                                            <li key={teacher._id}>
+                                                <span className="teacherName" onClick={() => this.markTeacherAttendance(teacher._id)}>
+                                                    {teacher.name}  |  </span>
+                                                <span className='me-5'>
+                                                    <FiTrash2 onClick={() => this.deleteTeacher(teacher._id, 'teachersName')} />
+                                                </span>
+                                            </li>
+                                        )
+                                    })
+                                }
                             </ol>
                         </div>
 
@@ -169,8 +261,10 @@ class StaffIncharge extends React.Component {
                             <h3>Non-Teaching Staff:</h3>
                             
                             <div class="input-group mb-3">
-                                <input type="text" class="form-control" placeholder="Add new staff"  value={this.state.newStaff} name='newStaff'
-                                    onChange={this.onTextChange} aria-label="Recipient's username" aria-describedby="button-addon2" />
+                                <input type="text" class="form-control" placeholder="Staff Name"  value={this.state.newStaff} name='newStaff'
+                                    onChange={this.onTextChange} />
+                                <input type="text" class="form-control" placeholder="Staff Email"  value={this.state.newStaffEmail} name='newStaffEmail'
+                                    onChange={this.onTextChange} />
                                 <button class="btn btn-outline-secondary" type="button" id="button-addon2"
                                     onClick={this.addStaff}>
                                         Add
@@ -180,10 +274,10 @@ class StaffIncharge extends React.Component {
                             {
                                 this.state.nonTeachersName.map((teacher, index) => {
                                     return (
-                                        <li key={index}>
-                                            <span className="teacherName" onClick={this.markStaffAttendance}>{teacher} | </span>
+                                        <li key={teacher._id}>
+                                            <span className="teacherName" onClick={this.markStaffAttendance}>{teacher.name} | </span>
                                             <span className='ml-5'>
-                                                <FiTrash2 onClick={() => this.deleteStaff(index)} />
+                                                <FiTrash2 onClick={() => this.deleteTeacher(teacher._id, 'nonTeachersName')} />
                                             </span>
                                         </li>
                                     )
@@ -192,22 +286,6 @@ class StaffIncharge extends React.Component {
                             </ol>
                         </div>
 
-                        {/* div for regularization requests */}
-                        <div className='col-4'>
-                            <h3>Regularization Requests:</h3>
-                            <div class="alert alert-info" role="alert">
-                                Hubert Woolridge has requested to mark them <b>present</b> on 21st July 2022.
-                                <br />
-                                <button className="btn btn-sm btn-success me-2">Accept</button>
-                                <button className="btn btn-sm btn-danger">Reject</button>
-                            </div>
-                            <div class="alert alert-info" role="alert">
-                                Callie Massy has requested to mark them <b>absent</b> on 12th July 2022.
-                                <br />
-                                <button className="btn btn-sm btn-success me-2">Accept</button>
-                                <button className="btn btn-sm btn-danger">Reject</button>
-                            </div>
-                        </div>
                     </div>
 
                     <div className="row mt-5">
@@ -217,17 +295,14 @@ class StaffIncharge extends React.Component {
                                 <option selected>Open this select menu</option>
                                 {
                                     this.state.teachersName.map(teacher => (
-                                        <option>{teacher}</option>
+                                        <option>{teacher.name}</option>
                                     ))
                                 }
                                 {
                                     this.state.nonTeachersName.map(staff => (
-                                        <option>{staff}</option>
+                                        <option>{staff.name}</option>
                                     ))
                                 }
-                                {/* <option value="1">One</option>
-                                <option value="2">Two</option>
-                                <option value="3">Three</option> */}
                             </select>
                             <button className="btn btn-info mt-4">Generate Report</button>
                         </div>

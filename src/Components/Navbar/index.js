@@ -3,6 +3,11 @@ import {FaHome} from "react-icons/fa";
 import './style.css';
 
 class Navbar extends React.Component {
+    logout = () => {
+        //delete from local storage
+        localStorage.removeItem('user');
+        window.location.reload(false);
+    }
     render() {
         return (
             <nav className="navbar navbar-expand-lg bg-dark text-light">
@@ -34,6 +39,9 @@ class Navbar extends React.Component {
                             </li>
                             <li className="nav-item">
                                 <a className="nav-link" href="#">Resources</a>
+                            </li>
+                            <li className="nav-item" onClick={this.logout}>
+                                <a className="nav-link" href="#">Logout</a>
                             </li>
                         </ul>
                     </div>

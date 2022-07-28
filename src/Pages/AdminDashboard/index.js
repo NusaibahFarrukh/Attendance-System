@@ -1,4 +1,5 @@
 import React from 'react';
+import axios from 'axios';
 import Navbar from '../../Components/Navbar';
 
 import { FiEdit } from 'react-icons/fi';
@@ -9,15 +10,78 @@ class AdminDashboard extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            principalName: 'Viral Patel',
-            hodName: 'Aakash Holla'
+            principalName: {
+                name: ''
+            },
+            hodName: {
+                name: ''
+            }
         }
     }
 
+    componentDidMount() {
+        axios.get('http://localhost:5000/getIncharge')
+            .then(res => {
+                console.log(res)
+                if (res.status === 200) {
+                    let data = res.data.data;
+
+                    let principal = data.filter(item => item.subrole === 'principal');
+                    let HOD = data.filter(item => item.subrole === 'hod');
+
+                    this.setState({
+                        principalName: principal[0],
+                        hodName: HOD[0]
+                    })
+                }
+            }).catch(err => {
+                console.log(err)
+            })
+    }
+
     onTextChange = (event) => {
-        this.setState({
-            [event.target.name]: event.target.value
-        })
+        let principalData = this.state.principalName
+        let hodData = this.state.hodName
+
+        if (event.target.name === 'principalName') {
+            principalData.name = event.target.value
+            this.setState({
+                principalName: principalData
+            })
+        } else if (event.target.name === 'hodName') {
+            hodData.name = event.target.value
+            this.setState({
+                hodName: hodData
+            })
+        }
+    }
+
+    changePrincipal = () => {
+        console.log("Changing Principal")
+        axios.get('http://localhost:5000/changeIncharge?name=' + this.state.principalName.name + '&subrole=principal')
+            .then(res => {
+                console.log(res)
+                if (res.status === 200) {
+                    console.log("Principal changed")
+                }
+            }).catch(err => {
+                console.log(err)
+            }
+        )
+    }
+
+    changeHod = () => {
+        console.log("Changing HOD")
+        axios.get('http://localhost:5000/changeIncharge?name=' + this.state.hodName.name + '&subrole=hod')
+            .then(res => {
+                console.log(res)
+                if (res.status === 200) {
+                    console.log("HOD changed")
+                }
+            }).catch(err => {
+                console.log(err)
+            }
+        )
     }
 
     render() {
@@ -33,14 +97,14 @@ class AdminDashboard extends React.Component {
                 <div className=' row mt-5'>
                     <div className='col-6'>
                         <h3>Principal Name: </h3>
-                        <p>{this.state.principalName} <FiEdit /></p>
+                        <p>{this.state.principalName.name} <FiEdit /></p>
                         <button type="button" className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
                             Edit Principal
                         </button>
                     </div>
                     <div className='col-6'>
                         <h3>HOD Name:</h3>
-                        <p>{this.state.hodName} <FiEdit /></p>
+                        <p>{this.state.hodName.name} <FiEdit /></p>
 
                         <button type="button" className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal1">
                             Edit HOD
@@ -59,13 +123,13 @@ class AdminDashboard extends React.Component {
                             <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div className="modal-body">
-                            <input type="text" class="form-control" id="principalName" placeholder="Enter new principal name" name="principalName"
-                                value={this.state.principalName} onChange={this.onTextChange} />
+                            <input type="text" className="form-control" id="principalName" placeholder="Enter new principal name" name="principalName"
+                                value={this.state.principalName.name} onChange={this.onTextChange} />
                             
                         </div>
                         <div className="modal-footer">
                             <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="button" className="btn btn-primary" data-bs-dismiss="modal">Save changes</button>
+                            <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={this.changePrincipal}>Save changes</button>
                         </div>
                         </div>
                     </div>
@@ -79,13 +143,13 @@ class AdminDashboard extends React.Component {
                             <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div className="modal-body">
-                            <input type="text" class="form-control" id="principalName" placeholder="Enter new principal name" name="hodName"
-                                value={this.state.hodName} onChange={this.onTextChange} />
+                            <input type="text" className="form-control" id="principalName" placeholder="Enter new principal name" name="hodName"
+                                value={this.state.hodName.name} onChange={this.onTextChange} />
                             
                         </div>
                         <div className="modal-footer">
                             <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="button" className="btn btn-primary" data-bs-dismiss="modal">Save changes</button>
+                            <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={this.changeHod}>Save changes</button>
                         </div>
                         </div>
                     </div>
