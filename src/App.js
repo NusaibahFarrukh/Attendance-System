@@ -14,27 +14,27 @@ import './App.css';
 function App({user}) {
   // console.log("Printing user from props: ", user)
 
-  // if (user) {
-  //   if (user.role === 'admin') {
-  //     return <AdminDashboard user={user} />
-  //   } else if (user.role === 'incharge') {
-  //     return <StaffIncharge user={user} />
-  //   } else if (user.role === 'nonTeacher') {
-  //     return <StaffDashboard user={user} />
-  //   } else if (user.role === 'teacher') {
-  //     return <TeacherDashboard user={user} />
-  //   } else if (user.role === 'student') {
-  //     return <StudentDashboard user={user} />
-  //   }
-  // }
-  // else return <Login />
+  if (user) {
+    if (user.role === 'admin') {
+      return <AdminDashboard user={user} />
+    } else if (user.role === 'incharge') {
+      return <StaffIncharge user={user} />
+    } else if (user.role === 'nonTeacher') {
+      return <StaffDashboard user={user} />
+    } else if (user.role === 'teacher') {
+      return <TeacherDashboard user={user} />
+    } else if (user.role === 'student') {
+      return <StudentDashboard user={user} />
+    }
+  }
+  else return <Login />
   return (
     <div className="App">
       {/* <Login /> */}
       {/* <MainPage /> */}
       {/* <AdminDashboard /> */}
       {/* <StaffIncharge /> */}
-      <TeacherDashboard />
+      {/* <TeacherDashboard /> */}
       {/* <StaffDashboard /> */}
       {/* <StudentDashboard /> */}
     </div>

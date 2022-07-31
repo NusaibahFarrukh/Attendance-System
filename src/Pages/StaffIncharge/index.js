@@ -1,5 +1,6 @@
 import React from 'react';
 import axios from 'axios';
+import moment from 'moment';
 
 import {FiTrash2} from 'react-icons/fi';
 import Swal from 'sweetalert2'
@@ -12,34 +13,16 @@ class StaffIncharge extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            // teachersName: [
-            //     "Hubert Woolridge",
-            //     "Robert Burgess",
-            //     "Nina Williamson",
-            //     "Ashley Hancock",
-            //     "Callie Massy",
-            //     "Trista Loxley",
-            //     "Cedric Marshman",
-            //     "Tony Tingey",
-            //     "Trix Morton",
-            //     "Conrad Jackson"
-            // ],
-            // nonTeachersName: [
-            //     "Callie Massy",
-            //     "Trista Loxley",
-            //     "Cedric Marshman",
-            //     "Tony Tingey",
-            //     "Trix Morton",
-            //     "Conrad Jackson",
-            //     "Hubert Woolridge",
-                
-            // ],
             teachersName: [],
             nonTeachersName: [],
             newTeacher: '',
             newTeacherEmail: '',
             newStaff: '',
             newStaffEmail: '',
+            regularizeRequests: [],
+            fromDate: '',
+            tillDate: '',
+            report: []
         }
     }
 
@@ -72,6 +55,15 @@ class StaffIncharge extends React.Component {
                         nonTeachersName: allNonTeachers
                     })
                 }
+            }).catch(err => {
+                console.log(err)
+            })
+
+        axios.get('http://localhost:5000/staff/getAllReg')
+            .then(res => {
+                this.setState({
+                    regularizeRequests: res.data.data
+                })
             }).catch(err => {
                 console.log(err)
             })
@@ -195,11 +187,17 @@ class StaffIncharge extends React.Component {
         })
     }
 
-    markTeacherAttendance = (index) => {
-        console.log("Teacher to mark attendance: ", this.state.teachersName[index])
+    markTeacherAttendance = (id) => {
+        
+        let teacher = this.state.teachersName.filter(teach => teach._id === id)
+        if (teacher.length === 0) {
+            teacher = this.state.nonTeachersName.filter(teach => teach._id === id)
+        }
+        teacher = teacher[0]
+        console.log("Teacher to mark attendance: ", id)
 
         Swal.fire({
-            title: 'Mark the attendance for ' + this.state.teachersName[index],
+            title: 'Mark the attendance for ' + teacher.name,
             showDenyButton: true,
             showCancelButton: true,
             confirmButtonText: 'Present',
@@ -207,11 +205,48 @@ class StaffIncharge extends React.Component {
           }).then((result) => {
             /* Read more about isConfirmed, isDenied below */
             if (result.isConfirmed) {
-              Swal.fire('Attendance Marked as Present!', '', 'success')
+                axios.get('http://localhost:5000/staff/addAttendance?userid='+id)
+                    .then(res => {
+                        this.setState({
+                            markedToday: true
+                        })
+                    }) .catch(err => {
+                        console.log(err)
+                    })
+
+                Swal.fire('Attendance Marked as Present!', '', 'success')
             } else if (result.isDenied) {
               Swal.fire('Attendance Marked as Absent!', '', 'info')
             }
           })
+    }
+
+    deleteRequest = (id) => {
+        let req = this.state.regularizeRequests
+        req = req.filter(item => item._id !== id)
+        this.setState({
+            regularizeRequests: req
+        })
+    }
+
+    generateReport = () => {
+        let user = this.state.selectedStaff
+        let startDate = moment(this.state.fromDate, 'YYYY-MM-DD').format('DD-MM-YYYY')
+        let endDate = moment(this.state.tillDate, 'YYYY-MM-DD').format('DD-MM-YYYY')
+
+        console.log(user, startDate, endDate)
+        axios.get('http://localhost:5000/staff/getReport?startDate=' + startDate + '&endDate=' + endDate + '&userid=' + user)
+            .then(res => {
+                console.log(res)
+                if (res.status === 200) {
+                    console.log("Report generated")
+                    this.setState({
+                        report: res.data.data
+                    })
+                }
+            }).catch(err => {
+                console.log(err)
+            })
     }
 
     render() {
@@ -275,7 +310,8 @@ class StaffIncharge extends React.Component {
                                 this.state.nonTeachersName.map((teacher, index) => {
                                     return (
                                         <li key={teacher._id}>
-                                            <span className="teacherName" onClick={this.markStaffAttendance}>{teacher.name} | </span>
+                                            <span className="teacherName"  onClick={() => this.markTeacherAttendance(teacher._id)}>
+                                                {teacher.name} | </span>
                                             <span className='ml-5'>
                                                 <FiTrash2 onClick={() => this.deleteTeacher(teacher._id, 'nonTeachersName')} />
                                             </span>
@@ -288,23 +324,93 @@ class StaffIncharge extends React.Component {
 
                     </div>
 
+                    {/* <div className='row mt-5'>
+                        <h4>Regularization Requests:</h4>
+                        {
+                            this.state.regularizeRequests.map(request => {
+                                let user = this.state.teachersName.filter(teach => teach._id === request.user)
+                                if (user.length === 0) {
+                                    user = this.state.nonTeachersName.filter(teach => teach._id === request.user)
+                                }
+                                user = user[0]
+
+                                return (
+                                    <div class="alert alert-info" role="alert">
+                                        {user.name} has requested to mark them <b>absent</b> on {request.date}.
+                                        <br />
+                                        <button className="btn btn-sm btn-success me-2" onClick={() => this.deleteRequest(request._id)}>Accept</button>
+                                        <button className="btn btn-sm btn-danger" onClick={() => this.deleteRequest(request._id)}>Reject</button>
+                                    </div>
+                                )
+                            })
+                        }
+                    </div> */}
+
                     <div className="row mt-5">
+                        <h4>Check the attendance report:</h4>
                         <div className="col-4">
-                            <h4>Check the attendance report:</h4>
-                            <select class="form-select" aria-label="Default select example">
-                                <option selected>Open this select menu</option>
+                            <label>Select the employee:</label>
+                            <select class="form-select" value={this.state.selectedStaff} name='selectedStaff' onChange={this.onTextChange}>
+                                <option selected value=''>Open this select menu</option>
                                 {
                                     this.state.teachersName.map(teacher => (
-                                        <option>{teacher.name}</option>
+                                        <option key={teacher._id} value={teacher._id}>{teacher.name}</option>
                                     ))
                                 }
                                 {
                                     this.state.nonTeachersName.map(staff => (
-                                        <option>{staff.name}</option>
+                                        <option key={staff._id} value={staff._id}>{staff.name}</option>
                                     ))
                                 }
                             </select>
-                            <button className="btn btn-info mt-4">Generate Report</button>
+                        </div>
+
+                        <div className='col-4'>
+                            <label>From Date</label>
+                            <input type="date" class="form-control" placeholder="Date"  value={this.state.fromDate} name='fromDate' onChange={this.onTextChange} />
+                        </div>
+                        <div className='col-4'>
+                            <label>Till Date</label>
+                            <input type="date" class="form-control" placeholder="Date"  value={this.state.tillDate} name='tillDate' onChange={this.onTextChange} />
+                        </div>
+
+                        <div className={this.state.report.length === 0 ? "d-none" : "col-12 mt-3"}>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Name</th>
+                                <th scope="col">Date</th>
+                                <th scope="col">Time</th>
+                                <th scope="col">Remark</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {
+                                    this.state.report.map((rep, index) => {
+                                        let user = this.state.teachersName.filter(teach => teach._id === rep.userID)
+                                        if (user.length === 0) {
+                                            user = this.state.nonTeachersName.filter(teach => teach._id === rep.userID)
+                                        }
+                                        user = user[0]
+                                        return (
+                                            <tr key={rep._id}>
+                                                <th scope="row">{index + 1}</th>
+                                                <td>{user.name}</td>
+                                                <td>{rep.date}</td>
+                                                <td>{rep.time}</td>
+                                                <td>PRESENT</td>
+                                            </tr>
+                                        )
+                                    })
+                                }
+                                
+                            </tbody>
+                            </table>
+                        </div>
+
+                        <div className='col-4'>
+                            <button className="btn btn-info mt-4" onClick={this.generateReport}>Generate Report</button>
                         </div>
                     </div>
 

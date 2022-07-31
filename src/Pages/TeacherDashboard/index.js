@@ -1,6 +1,8 @@
 import axios from 'axios';
 import React from 'react';
 import { FiTrash2 } from 'react-icons/fi';
+import moment from 'moment';
+import Swal from "sweetalert2";
 
 import Navbar from '../../Components/Navbar';
 
@@ -10,53 +12,21 @@ class TeacherDashboard extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            // subjects: [
-            //     "Engineering Mathematics I",
-            //     "Microprocessor and Micro-controller",
-            // ],
-            // classes: [
-            //     "CSE-1",
-            //     "ECE-2",
-            // ],
             subjects: [],
             classes: [],
+            students: [],
             classDisplay: false,
             selectedSubject: '',
-            students: [
-                {
-                    name: 'John',
-                    class: '0',
-                },
-                {
-                    name: 'Jane',
-                    class: '1',
-                },
-                {
-                    name: 'Jack',
-                    class: '0',
-                },
-                {
-                    name: 'Jill',
-                    class: '1',
-                },
-                {
-                    name: 'Joe',
-                    class: '0',
-                },
-                {
-                    name: 'Jenny',
-                    class: '1',
-                },
-                {
-                    name: 'Juan',
-                    class: '0',
-                },
-            ],
             studentsDisplay: false,
             studentsFiltered: [],
             selectedClass: '',
+            selectedClassName: '',
             newSubject: '',
             newStudent: '',
+            newStudentEmail: '',
+            attendanceClass: '',
+            markedToday: false,
+            allAttendance: []
         }
     }
 
@@ -87,6 +57,8 @@ class TeacherDashboard extends React.Component {
             }).catch(error => {
                 console.log(error);
             })
+        
+        this.getAttendance();
     }
 
     onTextChange = (event) => {
@@ -107,17 +79,54 @@ class TeacherDashboard extends React.Component {
         })
     }
 
+    markAttendance = () => {
+        if (this.state.markedToday) {
+          console.log("Regularizing")
+          let user = JSON.parse(localStorage.getItem("user"));
+          axios.get('http://localhost:5000/staff/regularize?userid=' + user._id)
+          Swal.fire({
+            title: "Regularized!",
+            text: "Attendance for today is marked as regularized.",
+            icon: "success",
+            confirmButtonText: "OK"
+          })
+        } else {
+          console.log("Marking attendance")
+          let user = JSON.parse(localStorage.getItem("user"));
+          axios.get('http://localhost:5000/staff/addAttendance?userid='+user._id)
+            .then(res => {
+              this.setState({
+                markedToday: true
+              })
+            }) .catch(err => {
+              console.log(err)
+            })
+    
+          // reload the page
+        //   window.location.reload();
+        }
+        
+      }
+
     showStudents = (classID) => {
         console.log(classID);
-        // console.log("Subject Name: ", this.state.classes[index]);
-        // let classStudents = this.state.students.filter(student => student.class == index);
-        // console.log({classStudents});
-        // this.setState({
-        //     selectedClass: index,
-        //     studentsFiltered: classStudents,
-        //     studentsDisplay: true,
-        //     classDisplay: false,
-        // })
+        let selectedClass = this.state.classes.filter(classs => classs._id === classID)[0];
+
+        axios.get('http://localhost:5000/teacher/getClassStudents?classId=' + classID)
+            .then(response => {
+                console.log(response);
+                if (response.status === 200) {
+                    this.setState({
+                        selectedClass: classID,
+                        selectedClassName: selectedClass.name,
+                        students: response.data.data,
+                        studentsDisplay: true,
+                        classDisplay: false,
+                    })
+                }
+            }).catch(error => {
+                console.log(error);
+            })
     }
 
     addSubject = () => {
@@ -161,6 +170,56 @@ class TeacherDashboard extends React.Component {
         })
     }
 
+    selectClassForAttendance = (event) => {
+        let classID = event.target.value;
+        this.setState({
+            attendanceClass: classID
+        }, () => {
+            // get student for this class
+            let selectedClass = this.state.classes.filter(classs => classs._id === classID)[0];
+
+            axios.get('http://localhost:5000/teacher/getClassStudents?classId=' + classID)
+                .then(response => {
+                    console.log(response);
+                    if (response.status === 200) {
+                        this.setState({
+                            selectedClass: classID,
+                            selectedClassName: selectedClass.name,
+                            students: response.data.data,
+                            studentsDisplay: false,
+                            classDisplay: true,
+                        })
+                    }
+                }).catch(error => {
+                    console.log(error);
+                })
+        })
+    }
+
+    getAttendance = () => {
+        let user = JSON.parse(localStorage.getItem("user"));
+        axios.get('http://localhost:5000/staff/getAttendance?userid=' + user._id)
+          .then(res => {
+            if (res.status === 200) {
+              let attendance = res.data.data;
+              let isToday = attendance.filter(att => att.date === moment().format("DD-MMM-YYYY"));
+              if (isToday.length === 0) {
+                this.setState({
+                  markedToday: false,
+                  allAttendance: attendance
+                })
+              } else {
+                this.setState({
+                  markedToday: true,
+                  allAttendance: attendance
+                })
+              }
+            }
+          }).catch(err => {
+            console.log(err);
+          })
+      }
+
     render() {
         let user = JSON.parse(localStorage.getItem('user'));
 
@@ -170,6 +229,21 @@ class TeacherDashboard extends React.Component {
 
                 <div className="container mt-5">
                     <h3> Welcome, {user.name}.</h3>
+
+                    <div className="row bg-success text-light p-5">
+                        <div className="col-6 text-center">
+                        <h5 className="mb-0">Mark Attendance for today!</h5>
+                        <h5>
+                            <b>{moment().format("Do MMMM, YYYY")}</b>
+                        </h5>
+                        </div>
+                        <div className="col-6 text-center">
+                        <p className={this.state.markedToday ? "d-block" : "d-none"}>Attendance for today is marked.</p>
+                        <button className="btn btn-info btn-lg" onClick={this.markAttendance} >
+                            {this.state.markedToday ? "Regularize" : "Mark Attendance"}
+                        </button>
+                        </div>
+                    </div>
 
                     <div className="row mt-4">
                         <div className="col-6">
@@ -267,12 +341,12 @@ class TeacherDashboard extends React.Component {
                             <input type="text" class="form-control" value={this.state.selectedSubject.name} disabled />
 
                             <p className="mt-3 mb-1">Select the class to take attendance:</p>
-                            <select class="form-select" aria-label="Default select example">
-                                <option selected>Select the class</option>
+                            <select class="form-select" onChange={this.selectClassForAttendance} value={this.state.attendanceClass}>
+                                <option value='' selected>Select the class</option>
                                 {
-                                    this.state.classes.map((cl, index) => {
+                                    this.state.classes.map((cl) => {
                                         return (
-                                            <option key={cl._id}>{cl.name}</option>
+                                            <option key={cl._id} value={cl._id}>{cl.name}</option>
                                         )
                                     })   
                                 }
@@ -282,7 +356,7 @@ class TeacherDashboard extends React.Component {
                             {
                                 this.state.students.map((student, index) => {
                                     return (
-                                        <div class="alert alert-secondary" role="alert" key={index}>
+                                        <div class="alert alert-secondary" role="alert" key={student._id}>
                                             <div className="row">
                                                 <div className="col-6">
                                                     <b>{index + 1}.</b> {student.name}
@@ -300,13 +374,16 @@ class TeacherDashboard extends React.Component {
                         </div>
 
                         <div name="show-students" className="col-5 offset-1" style={{ display: this.state.studentsDisplay ? 'block' : 'none' }}>
+                            {/* <label>Add Student to class {this.state.selectedClassName}:</label>
                             <div class="input-group mb-3">
-                                <input type="text" class="form-control" placeholder={"Add Student to class " + this.state.classes[this.state.selectedClass]}  name='newStudent'
+                                <input type="text" class="form-control" placeholder={"Student Name"}  name='newStudent'
+                                    onChange={this.onTextChange} />
+                                <input type="text" class="form-control" placeholder={"Student Email"}  name='newStudentEmail'
                                     onChange={this.onTextChange} />
                                 <button class="btn btn-outline-secondary" type="button" id="button-addon2"> Add </button>
-                            </div>
+                            </div> */}
                             {
-                                this.state.studentsFiltered.map((student, index) => {
+                                this.state.students.map((student, index) => {
                                     return (
                                         <div class="alert alert-secondary" role="alert" key={index}>
                                             <div className="row">

@@ -3,8 +3,75 @@ import Navbar from "../../Components/Navbar";
 import moment from "moment";
 
 import "./style.css";
+import axios from "axios";
+import Swal from "sweetalert2";
 
 class StaffDashboard extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      markedToday: false,
+      allAttendance: []
+    }
+  }
+
+  componentDidMount() {
+    this.getAttendance();
+  }
+
+  getAttendance = () => {
+    let user = JSON.parse(localStorage.getItem("user"));
+    axios.get('http://localhost:5000/staff/getAttendance?userid=' + user._id)
+      .then(res => {
+        if (res.status === 200) {
+          let attendance = res.data.data;
+          let isToday = attendance.filter(att => att.date === moment().format("DD-MMM-YYYY"));
+          if (isToday.length === 0) {
+            this.setState({
+              markedToday: false,
+              allAttendance: attendance
+            })
+          } else {
+            this.setState({
+              markedToday: true,
+              allAttendance: attendance
+            })
+          }
+        }
+      }).catch(err => {
+        console.log(err);
+      })
+  }
+
+  markAttendance = () => {
+    if (this.state.markedToday) {
+      console.log("Regularizing")
+      let user = JSON.parse(localStorage.getItem("user"));
+      axios.get('http://localhost:5000/staff/regularize?userid=' + user._id)
+      Swal.fire({
+        title: "Regularized!",
+        text: "Attendance for today is marked as regularized.",
+        icon: "success",
+        confirmButtonText: "OK"
+      })
+    } else {
+      console.log("Marking attendance")
+      let user = JSON.parse(localStorage.getItem("user"));
+      axios.get('http://localhost:5000/staff/addAttendance?userid='+user._id)
+        .then(res => {
+          this.setState({
+            markedToday: true
+          })
+        }) .catch(err => {
+          console.log(err)
+        })
+
+      // reload the page
+      window.location.reload();
+    }
+    
+  }
+
   render() {
     const weekday = [
       "Sunday",
@@ -18,25 +85,24 @@ class StaffDashboard extends React.Component {
     let today = new Date();
     let day = weekday[today.getDay()];
     
-    let date =
-      today.toLocaleString("default", { month: "long" }) +
-      " " +
-      (today.getMonth() + 1) +
-      ", " +
-      today.getFullYear() +
-      " (" +
-      day +
-      ")";
+    let date = moment().format("Do MMMM, YYYY");
 
     const startOfMonth = moment().startOf("month").format("DD");
     const endOfMonth = moment().endOf("month").format("DD");
+    let daysOfMonth = [];
+    for (let i = startOfMonth; i <= endOfMonth; i++) {
+      daysOfMonth.push(i);
+    }
+
+    // get user from local stroage
+    const user = JSON.parse(localStorage.getItem("user"));
 
     return (
       <div>
         <Navbar />
 
         <div className="container mt-5">
-          <h3>Welcome, Staff Member.</h3>
+          <h3>Welcome, {user.name}.</h3>
 
           <div className="row bg-success text-light p-5">
             <div className="col-6 text-center">
@@ -46,7 +112,10 @@ class StaffDashboard extends React.Component {
               </h5>
             </div>
             <div className="col-6 text-center">
-              <button className="btn btn-info btn-lg">Mark Attendance</button>
+              <p className={this.state.markedToday ? "d-block" : "d-none"}>Attendance for today is marked.</p>
+              <button className="btn btn-info btn-lg" onClick={this.markAttendance} >
+                {this.state.markedToday ? "Regularize" : "Mark Attendance"}
+              </button>
             </div>
           </div>
 
@@ -54,7 +123,7 @@ class StaffDashboard extends React.Component {
           <div className="row mt-4">
             <div className="col-10 offset-1">
             * Background of each day present will be marked with different color
-              <div class="month">
+              <div className="month">
                 <ul className="cal">
                   <li>
                     {today.toLocaleString("default", { month: "long" })}
@@ -64,51 +133,23 @@ class StaffDashboard extends React.Component {
                 </ul>
               </div>
 
-              <ul class="weekdays">
-                <li>Mo</li>
-                <li>Tu</li>
-                <li>We</li>
-                <li>Th</li>
-                <li>Fr</li>
-                <li>Sa</li>
-                <li>Su</li>
+              <ul className="days">
+                {
+                  daysOfMonth.map(day => {
+                    return (
+                      <li className="day">
+                        <span className={ this.state.allAttendance.filter(d => moment(d.date, "DD-MMM-YYYY").format("DD") == day).length === 0 ? "" : "active" }>
+                          {day}
+                        </span>
+                      </li>
+                    )
+                  })
+                }
               </ul>
 
-              <ul class="days">
-                <li>1</li>
-                <li>2</li>
-                <li>3</li>
-                <li>4</li>
-                <li>5</li>
-                <li>6</li>
-                <li>7</li>
-                <li>8</li>
-                <li>9</li>
-                <li>
-                  <span class="active">10</span>
-                </li>
-                <li>11</li>
-                <li>12</li>
-                <li>13</li>
-                <li>14</li>
-                <li>15</li>
-                <li>16</li>
-                <li>17</li>
-                <li>18</li>
-                <li>19</li>
-                <li>20</li>
-                <li>21</li>
-                <li>22</li>
-                <li>23</li>
-                <li>24</li>
-                <li>25</li>
-                <li>26</li>
-                <li>27</li>
-                <li>28</li>
-                <li>29</li>
-                <li>30</li>
-                <li>31</li>
-              </ul>
+              {/* <div className="row mt-5 mb-5">
+                Get the report:
+              </div> */}
             </div>
           </div>
         </div>

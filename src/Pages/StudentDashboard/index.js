@@ -10,6 +10,8 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import moment from "moment";
+import axios from "axios";
 
 ChartJS.register(
   CategoryScale,
@@ -24,13 +26,34 @@ class StudentDashboard extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      subjects: [
-        "Engineering Mathematics - I",
-        "Micro Processors and Micro-Controllers",
-        "Data Structure and Algorithms",
-      ],
+      subjects: [],
+      selectedSubject: ''
+      // subjects: [
+      //   "Engineering Mathematics - I",
+      //   "Micro Processors and Micro-Controllers",
+      //   "Data Structure and Algorithms",
+      // ],
     };
   }
+
+  componentDidMount() {
+    let user = JSON.parse(localStorage.getItem("user"));
+    axios.get('http://localhost:5000/student/getStudentsClass?userid=' + user._id)
+      .then((res) => {
+        if (res.status === 200) {
+          this.setState({ subjects: res.data.data });
+        }
+      }).catch((err) => {
+        console.log(err);
+      })
+    }
+
+    onChange = (event) => {
+      this.setState({
+        [event.target.name]: event.target.value
+      })
+    }
+
   render() {
     let datasets = [
       {
@@ -52,32 +75,25 @@ class StudentDashboard extends React.Component {
     let today = new Date();
     let day = weekday[today.getDay()];
 
-    let date =
-      today.toLocaleString("default", { month: "long" }) +
-      " " +
-      (today.getMonth() + 1) +
-      ", " +
-      today.getFullYear();
+    let date = moment().format("Do MMMM, YYYY");
+    let user = JSON.parse(localStorage.getItem("user"));
 
     return (
       <>
         <Navbar />
 
         <div className="container mt-5">
-          <h3>Hello, Student.</h3>
+          <h3>Hello, {user.name}.</h3>
           <div className="row mt-4">
             <div className="col-6 bg-dark text-light p-5">
               Select the subject and mark your attendance for the day.
-              <select
-                class="form-select mt-2"
-                aria-label="Default select example"
-              >
-                <option selected>Open this select menu</option>
-                <option value="1">Engineering Mathematics - I</option>
-                <option value="2">
-                  Micro Processors and Micro-Controllers
-                </option>
-                <option value="3">Data Structure and Algorithms</option>
+              <select class="form-select mt-2" value={this.state.selectedSubject} onChange={this.onChange} name="selectedSubject">
+                <option selected value=''>Open this select menu</option>
+                {
+                  this.state.subjects.map((subject) => {
+                    return <option value={subject._id}>{subject.name}</option>
+                  })
+                }
               </select>
               <h4 className="mt-4 text-center">{date}</h4>
               <h4 className="text-center">({weekday[today.getDay()]})</h4>
